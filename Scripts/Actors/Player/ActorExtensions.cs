@@ -25,17 +25,19 @@ namespace FPTemplate.Actors
 
 		public static string GetControlNameForAction(this PlayerInput input, eActionKey key)
 		{
-			//if(m_controlNameCache.TryGetValue(key, out var bindingName))
+			if(m_controlNameCache.TryGetValue(key, out var bindingName))
 			{
-				//return bindingName;
+				return bindingName;
 			}
 			foreach (var action in input.actions)
 			{
 				if (string.Equals(action.name, key.ToString(), StringComparison.OrdinalIgnoreCase))
 				{
-					var bindingName = action.GetBindingDisplayString(group: input.currentControlScheme ?? input.defaultControlScheme, options: InputBinding.DisplayStringOptions.DontOmitDevice);
+					bindingName = action.GetBindingDisplayString(group: input.currentControlScheme ?? input.defaultControlScheme, options: InputBinding.DisplayStringOptions.DontOmitDevice);
 					bindingName = bindingName.Replace(" [Keyboard]", "");
-					m_controlNameCache[key] = bindingName;
+                    bindingName = bindingName.Replace("Hold", "");
+					bindingName = bindingName.Trim();
+                    m_controlNameCache[key] = bindingName;					
 					return bindingName;
 				}
 			}

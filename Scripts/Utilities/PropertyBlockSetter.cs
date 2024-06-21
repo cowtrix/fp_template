@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 using FPTemplate;
+using UnityEngine.Rendering;
 
 namespace FPTemplate.Utilities
 {
@@ -86,5 +87,16 @@ namespace FPTemplate.Utilities
             }
             Renderer.SetPropertyBlock(MaterialPropertyBlock);
         }
+
+        private void OnDisable()
+        {
+            if (Renderer)
+            {
+                Renderer.GetPropertyBlock(MaterialPropertyBlock);
+                MaterialPropertyBlock.Clear();
+                Renderer.SetPropertyBlock(MaterialPropertyBlock);
+            }
+        }
     }
+
 }

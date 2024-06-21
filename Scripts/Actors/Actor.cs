@@ -20,6 +20,7 @@ namespace FPTemplate.Actors
         /// The interactable item that the player is currently focused on, i.e. in the crosshairs
         /// </summary>
         public Interactable FocusedInteractable { get; protected set; }
+        public float DistanceToFocusedInteractable { get; protected set; }
         public List<Interactable> Interactables { get; private set; } = new List<Interactable>();
         public Animator Animator { get; private set; }
         public ActorState State => GetComponent<ActorState>();

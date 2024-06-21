@@ -10,6 +10,7 @@ using FPTemplate.Actors;
 using FPTemplate.Actors.Player;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.UI.Extensions;
 
 namespace UI
 {
@@ -20,26 +21,24 @@ namespace UI
     {
         public const int OUTLINE_LAYER = 11;
 
-        public Image Icon;
         public TextMeshProUGUI ActionLabel;
         public RectTransform FocusSprite;
+        public CanvasGroup FocusCanvasGroup;
         private Camera Camera => CameraController.GetComponent<Camera>();
         public CameraController CameraController => CameraController.Instance;
         public PlayerActor PlayerActor;
         public Material InteractionMaterial;
         public StringEvent FocusedInteractableDisplayName;
+        public UICircle Interact, Perceive;
 
         private List<TextMeshProUGUI> m_labels = new List<TextMeshProUGUI>();
         private List<MeshRenderer> m_interactionOutlineRenderers = new List<MeshRenderer>();
-
         private GameObject m_outlineContainer;
 
         private void Start()
         {
             ActionLabel.gameObject.SetActive(false);
             m_outlineContainer = new GameObject("OutlineContainer");
-            //m_outline = new GameObject("Outline").AddComponent<Outline>();
-            //m_outline.transform.SetParent(m_outlineContainer.transform);
         }
 
         private void SetFocusDisplay(Interactable interactable)
@@ -95,15 +94,6 @@ namespace UI
                     InteractionMaterial.SetVector("_WorldCenter", center);
                 }
             }
-            if (m_interactionOutlineRenderers.Count > 0)
-            {
-                //m_outline.gameObject.SetActive(true);
-                //m_outline.SetRenderers(m_interactionOutlineRenderers);
-            }
-            else
-            {
-                //m_outline.gameObject.SetActive(false);
-            }
 
             var screenRect = new Rect(Camera.WorldToScreenPoint(interactable.transform.position), Vector2.zero);
             Bounds objBounds = interactable.GetBounds();
@@ -112,16 +102,36 @@ namespace UI
                 screenRect = screenRect.Encapsulate(Camera.WorldToScreenPoint(p));
             }
             const float nameMargin = 0f;
-            if(screenRect.yMin < nameMargin)
+            if (screenRect.yMin < nameMargin)
             {
                 screenRect.yMin = nameMargin;
             }
             FocusSprite.position = screenRect.center;
             FocusSprite.sizeDelta = screenRect.size;
+
+            var distance = PlayerActor.DistanceToFocusedInteractable;
+            Interact.enabled = true;
+            Perceive.enabled = true;
+
+            var distanceToInteractable = distance - settings.MaxUseDistance;
+            var t = 1 - (distanceToInteractable / (settings.MaxFocusDistance - settings.MaxUseDistance));
+            if (interactable.CanUse(PlayerActor))
+            {
+                Perceive.rectTransform.sizeDelta = Interact.rectTransform.sizeDelta;
+            }
+            else
+            {
+                Perceive.rectTransform.sizeDelta = Interact.rectTransform.sizeDelta * (1 + distanceToInteractable);
+                Perceive.color = Perceive.color.WithAlpha(t);
+            }
+
+            FocusCanvasGroup.alpha = Mathf.Clamp01(t * t);
         }
 
         private void ClearFocusDisplay()
         {
+            Interact.enabled = false;
+            Perceive.enabled = false;
             m_outlineContainer.SetActive(false);
             FocusSprite.gameObject.SetActive(false);
             FocusedInteractableDisplayName.Invoke("");
@@ -129,10 +139,10 @@ namespace UI
 
         private void Update()
         {
-            var interactable = PlayerActor.FocusedInteractable;
+            var interactable = PlayerActor?.FocusedInteractable;
             if (interactable != null)
             {
-                if(interactable != PlayerActor.State.EquippedItem)
+                if (interactable != PlayerActor.State.EquippedItem)
                 {
                     SetFocusDisplay(interactable);
                 }
@@ -181,13 +191,13 @@ namespace UI
             }
             else
             {
-                Icon.sprite = null;
+                //Icon.sprite = null;
                 foreach (var label in m_labels)
                 {
                     label.gameObject.SetActive(false);
                 }
             }
-            Icon.gameObject.SetActive(Icon.sprite);
+            //Icon.gameObject.SetActive(Icon.sprite);
         }
     }
 }

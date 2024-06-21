@@ -2,3 +2,6 @@
 	path = Scripts/World/Audio/muzak
 	url = https://github.com/cowtrix/muzak.git
 	branch = main
+[submodule "Scripts/Utilities/UI/uiextensions"]
+	path = Scripts/Utilities/UI/uiextensions
+	url = https://github.com/Unity-UI-Extensions/com.unity.uiextensions.git

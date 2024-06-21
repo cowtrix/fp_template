@@ -32,7 +32,8 @@ namespace FPTemplate.Actors.Player
 				var interactable = interactionHit.collider.GetComponent<Interactable>() ?? interactionHit.collider.GetComponent<InteractionForwarder>()?.Interactable;
 				if (interactable && interactable.enabled && interactionHit.distance < interactable.InteractionSettings.MaxFocusDistance)
 				{
-					if (interactable != FocusedInteractable)
+					DistanceToFocusedInteractable = interactionHit.distance;
+                    if (interactable != FocusedInteractable)
 					{
 						FocusedInteractable?.ExitFocus(this);
 						FocusedInteractable = interactable;
