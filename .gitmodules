@@ -1,0 +1,4 @@
+[submodule "Scripts/World/Audio/muzak"]
+	path = Scripts/World/Audio/muzak
+	url = https://github.com/cowtrix/muzak.git
+	branch = main
