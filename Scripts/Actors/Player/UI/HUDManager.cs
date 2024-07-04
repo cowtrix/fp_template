@@ -96,7 +96,7 @@ namespace UI
             }
 
             var screenRect = new Rect(Camera.WorldToScreenPoint(interactable.transform.position), Vector2.zero);
-            Bounds objBounds = interactable.GetBounds();
+            Bounds objBounds = interactable.Bounds;
             foreach (var p in objBounds.AllPoints())
             {
                 screenRect = screenRect.Encapsulate(Camera.WorldToScreenPoint(p));

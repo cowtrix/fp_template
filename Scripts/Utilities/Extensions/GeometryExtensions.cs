@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using FPTemplate.Utilities.Maths;
+using System.Collections.Generic;
 using System.Linq;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace FPTemplate.Utilities.Extensions
@@ -43,54 +45,28 @@ namespace FPTemplate.Utilities.Extensions
 			yield return new Vector3(b.max.x, b.max.y, b.max.z);
 		}
 
-		public static Rect WorldBoundsToScreenRect(this Bounds worldBounds, Camera camera)
-		{
-			if (!camera)
-			{
-				return default;
-			}
-			var screenRect = new Rect(camera.WorldToScreenPoint(worldBounds.center), Vector2.zero);
-			foreach (var p in worldBounds.AllPoints())
-			{
-				var screenP = camera.WorldToScreenPoint(p);
-				screenRect = screenRect.Encapsulate(screenP);
-			}
-			return screenRect;
-		}
+        public static IEnumerable<Vector3> AllPoints(this RotationalBounds bounds)
+        {
+            // Calculate the 8 corner points of the bounding box
+            Vector3[] points = new Vector3[8];
 
-		public static Rect ScreenRectToViewportRect(this Rect rect) =>
-			new Rect(rect.x / Screen.width, rect.y / Screen.height, rect.width / Screen.width, rect.height / Screen.height);
+            Vector3 halfExtents = bounds.extents;
+            Quaternion rotation = bounds.rotation;
+            Vector3 center = bounds.center;
 
-		public static bool ScreenRectIsOnScreen(this Rect rect) =>
-			rect.Overlaps(new Rect(0, 0, Screen.width, Screen.height));
+            points[0] = center + rotation * new Vector3(halfExtents.x, halfExtents.y, halfExtents.z);
+            points[1] = center + rotation * new Vector3(halfExtents.x, halfExtents.y, -halfExtents.z);
+            points[2] = center + rotation * new Vector3(halfExtents.x, -halfExtents.y, halfExtents.z);
+            points[3] = center + rotation * new Vector3(halfExtents.x, -halfExtents.y, -halfExtents.z);
+            points[4] = center + rotation * new Vector3(-halfExtents.x, halfExtents.y, halfExtents.z);
+            points[5] = center + rotation * new Vector3(-halfExtents.x, halfExtents.y, -halfExtents.z);
+            points[6] = center + rotation * new Vector3(-halfExtents.x, -halfExtents.y, halfExtents.z);
+            points[7] = center + rotation * new Vector3(-halfExtents.x, -halfExtents.y, -halfExtents.z);
 
-		
+            return points;
+        }
 
-		public static Rect ClipToScreen(this Rect rect)
-		{
-			var xMin = Mathf.Max(0, rect.xMin);
-			var yMin = Mathf.Max(0, rect.yMin);
-
-			var xMax = Mathf.Min(Screen.width, rect.xMax);
-			var yMax = Mathf.Min(Screen.height, rect.yMax);
-
-			return Rect.MinMaxRect(xMin, yMin, xMax, yMax);
-		}
-
-		public static bool BoundsWithinFrustrum(this Camera camera, Bounds worldBounds)
-		{
-			foreach (var p in worldBounds.AllPoints())
-			{
-				var screenP = camera.WorldToScreenPoint(p);
-				if(screenP.z > 0)
-				{
-					return true;
-				}
-			}
-			return false;
-		}
-
-		public static Bounds GetBounds(this IEnumerable<Renderer> renderers)
+        public static Bounds GetBounds(this IEnumerable<Renderer> renderers)
 		{
 			if(renderers == null)
 			{

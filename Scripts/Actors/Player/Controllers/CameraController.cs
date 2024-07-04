@@ -35,9 +35,22 @@ namespace FPTemplate.Actors
             m_look = Input.actions.Single(a => a.name == "Look");
         }
 
+		public void SetGlobalVariables()
+		{
+            //Shader.SetGlobalInt("_IsPlaying", 1);
+            Shader.SetGlobalVector("_WorldClipPos", Camera.transform.position);
+            Shader.SetGlobalVector("_WorldClipNormal", Camera.transform.forward);
+
+            var projection = Camera.main.nonJitteredProjectionMatrix;
+            projection = GL.GetGPUProjectionMatrix(projection, true);
+            Shader.SetGlobalMatrix("_RootProjectionMatrix", projection);
+        }
+
 		private void Update()
 		{
-			InputModule.enabled = UIEnabled;
+			SetGlobalVariables();
+
+            InputModule.enabled = UIEnabled;
 			Cursor.lockState = LockCursor ? CursorLockMode.Locked : CursorLockMode.Confined;
 			LastDelta = m_look.ReadValue<Vector2>() * LookSensitivity;
 			if (LockCameraLook)
@@ -89,5 +102,10 @@ namespace FPTemplate.Actors
 			// TODO
 			return true;
 		}
-	}
+
+        private void OnDisable()
+        {
+            Shader.SetGlobalInt("_IsPlaying", 0);
+        }
+    }
 }

@@ -4,6 +4,18 @@ namespace FPTemplate.Utilities.Extensions
 {
 	public static class TransformExtensions
     {
+        public static Matrix4x4 GetRelativeTransformationMatrix(this Transform sourceTransform, Transform targetTransform)
+        {
+            // Calculate the inverse matrix of the source transform
+            Matrix4x4 sourceInverse = Matrix4x4.TRS(sourceTransform.position, sourceTransform.rotation, sourceTransform.lossyScale).inverse;
+
+            // Calculate the matrix of the target transform
+            Matrix4x4 targetMatrix = Matrix4x4.TRS(targetTransform.position, targetTransform.rotation, targetTransform.lossyScale);
+
+            // Compute the relative transformation matrix
+            return targetMatrix * sourceInverse;
+        }
+
         public static void SetLayerRecursive(this Transform t, int layer)
         {
             t.gameObject.layer = layer;

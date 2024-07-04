@@ -5,3 +5,6 @@
 [submodule "Scripts/Utilities/UI/uiextensions"]
 	path = Scripts/Utilities/UI/uiextensions
 	url = https://github.com/Unity-UI-Extensions/com.unity.uiextensions.git
+[submodule "Scripts/Utilities/zplines"]
+	path = Scripts/Utilities/zplines
+	url = https://github.com/cowtrix/zSplines.git

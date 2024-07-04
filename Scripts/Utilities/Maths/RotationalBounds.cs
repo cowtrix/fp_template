@@ -43,5 +43,23 @@ namespace FPTemplate.Utilities.Maths
         {
             return string.Format("Position: {0} | Size: {1} | Rotation: {2}", center, extents * 2, rotation.eulerAngles);
         }
+
+        public static RotationalBounds operator *(Matrix4x4 matrix, RotationalBounds bounds)
+        {
+            // Transform the center
+            Vector3 newCenter = matrix.MultiplyPoint(bounds.center);
+
+            // Extract the rotation matrix and apply it to the current rotation
+            Quaternion newRotation = matrix.rotation * bounds.rotation;
+
+            // Apply the absolute values of the matrix scale to the extents
+            Vector3 newExtents = Vector3.Scale(bounds.extents, new Vector3(
+                Mathf.Abs(matrix.lossyScale.x),
+                Mathf.Abs(matrix.lossyScale.y),
+                Mathf.Abs(matrix.lossyScale.z)
+            ));
+
+            return new RotationalBounds(newCenter, newExtents * 2, newRotation);
+        }
     }
 }

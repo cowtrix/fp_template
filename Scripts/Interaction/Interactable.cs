@@ -151,7 +151,5 @@ namespace FPTemplate.Interaction
         }
 
         public InteractableSettings GetSettings() => InteractionSettings;
-
-        public Bounds GetBounds() => Bounds;
     }
 }
