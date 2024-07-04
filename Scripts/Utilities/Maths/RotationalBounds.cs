@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FPTemplate.Utilities.Extensions;
+using System;
 using UnityEngine;
 
 namespace FPTemplate.Utilities.Maths
@@ -61,5 +62,58 @@ namespace FPTemplate.Utilities.Maths
 
             return new RotationalBounds(newCenter, newExtents * 2, newRotation);
         }
+
+        public Vector3[] AllPoints()
+        {
+            Vector3[] points = new Vector3[8];
+
+            Vector3 halfExtents = extents;
+            Quaternion rot = rotation;
+            Vector3 center = this.center;
+
+            points[0] = center + rot * new Vector3(halfExtents.x, halfExtents.y, halfExtents.z);
+            points[1] = center + rot * new Vector3(halfExtents.x, halfExtents.y, -halfExtents.z);
+            points[2] = center + rot * new Vector3(halfExtents.x, -halfExtents.y, halfExtents.z);
+            points[3] = center + rot * new Vector3(halfExtents.x, -halfExtents.y, -halfExtents.z);
+            points[4] = center + rot * new Vector3(-halfExtents.x, halfExtents.y, halfExtents.z);
+            points[5] = center + rot * new Vector3(-halfExtents.x, halfExtents.y, -halfExtents.z);
+            points[6] = center + rot * new Vector3(-halfExtents.x, -halfExtents.y, halfExtents.z);
+            points[7] = center + rot * new Vector3(-halfExtents.x, -halfExtents.y, -halfExtents.z);
+
+            return points;
+        }
+
+        public Vector3 min
+        {
+            get
+            {
+                var points = AllPoints();
+                Vector3 min = points[0];
+
+                for (int i = 1; i < points.Length; i++)
+                {
+                    min = Vector3.Min(min, points[i]);
+                }
+
+                return min;
+            }
+        }
+
+        public Vector3 max
+        {
+            get
+            {
+                Vector3[] points = AllPoints();
+                Vector3 max = points[0];
+
+                for (int i = 1; i < points.Length; i++)
+                {
+                    max = Vector3.Max(max, points[i]);
+                }
+
+                return max;
+            }
+        }
+
     }
 }

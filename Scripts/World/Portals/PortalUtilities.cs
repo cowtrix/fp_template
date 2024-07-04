@@ -7,7 +7,7 @@ namespace FPTemplate.World.Portals
     public static class PortalUtilities
     {
         private static Canvas m_debugCanvas;
-        public static void DebugScreenRect(PortalRenderer renderer, PortalRenderer parent, Matrix4x4 mat)
+        public static void DebugScreenRect(PortalRenderer renderer, PortalRenderer parent)
         {
             if (!m_debugCanvas)
             {
@@ -17,7 +17,7 @@ namespace FPTemplate.World.Portals
                 var rt = m_debugCanvas.GetComponent<RectTransform>();
                 rt.pivot = Vector2.zero;
             }
-            var shouldRender = renderer.ShouldRender(parent, mat * renderer.Bounds, out var screenRect);
+            var shouldRender = renderer.ShouldRender(parent, renderer.Bounds, out var screenRect);
             var name = $"sr_{renderer.name}_{parent?.name ?? "root"}";
             var img = m_debugCanvas.transform.Find(name)?.GetComponent<Image>();
             if(img == null)
@@ -28,7 +28,7 @@ namespace FPTemplate.World.Portals
                 img.rectTransform.anchorMax = Vector2.zero;
                 img.rectTransform.anchorMin = Vector2.zero;
             }
-            img.color = (shouldRender ? Color.green : Color.red).WithAlpha(.25f);
+            img.color = (shouldRender ? Color.green : Color.red).WithAlpha(.02f);
             img.rectTransform.sizeDelta = screenRect.size;
             img.rectTransform.anchoredPosition = screenRect.position;
         }

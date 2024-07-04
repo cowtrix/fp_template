@@ -53,7 +53,9 @@ namespace FPTemplate.Utilities.Extensions
                 var point = p;
                 if (camera.IsPointBehindCamera(point))
                 {
+                    var oldPoint = point;
                     point = ClosestPointOnViewFrustum(camera, point);
+                    Debug.DrawLine(point, oldPoint, Color.yellow, .1f);
                 }
                 var screenP = camera.WorldToScreenPoint(point);
                 screenRect = screenRect.Encapsulate(screenP);
@@ -78,11 +80,38 @@ namespace FPTemplate.Utilities.Extensions
             return Rect.MinMaxRect(xMin, yMin, xMax, yMax);
         }
 
+        public static bool IsLineInFrustum(this Camera camera, Vector3 pointA, Vector3 pointB)
+        {
+            Plane[] frustumPlanes = GeometryUtility.CalculateFrustumPlanes(camera);
+
+            // Check if either point is inside the frustum
+            if (camera.IsPointInCameraFrustum(pointA) || camera.IsPointInCameraFrustum(pointB))
+            {
+                return true;
+            }
+
+            // Check if the line intersects any of the frustum planes
+            foreach (Plane plane in frustumPlanes)
+            {
+                if (plane.GetSide(pointA) != plane.GetSide(pointB))
+                {
+                    var closestPointA = plane.ClosestPointOnPlane(pointA);
+                    var closestPointB = plane.ClosestPointOnPlane(pointB);
+                    if(camera.IsPointInCameraFrustum(closestPointA) || camera.IsPointInCameraFrustum(closestPointB))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
         public static bool BoundsWithinFrustrum(this Camera camera, RotationalBounds worldBounds)
         {
             foreach (var p in worldBounds.AllPoints())
             {
-                if (IsPointInCameraFrustum(p, camera))
+                if (camera.IsPointInCameraFrustum(p))
                 {
                     return true;
                 }
@@ -90,12 +119,12 @@ namespace FPTemplate.Utilities.Extensions
             return false;
         }
 
-        private static bool IsPointInCameraFrustum(Vector3 point, Camera camera)
+        private static bool IsPointInCameraFrustum(this Camera camera, Vector3 point)
         {
             Vector3 viewportPoint = camera.WorldToViewportPoint(point);
             return viewportPoint.x >= 0 && viewportPoint.x <= 1 &&
                    viewportPoint.y >= 0 && viewportPoint.y <= 1 &&
-                   viewportPoint.z >= 0 && viewportPoint.z <= camera.farClipPlane;
+                   viewportPoint.z >= camera.nearClipPlane && viewportPoint.z <= camera.farClipPlane;
         }
 
         public static Matrix4x4 GetWorldToViewportMatrix(Camera camera, Matrix4x4 trsMatrix)

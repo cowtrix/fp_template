@@ -10,6 +10,7 @@ using System.Collections.Generic;
 namespace FPTemplate.World.Portals
 {
 
+
     public class PortalRenderer : TrackedObject<PortalRenderer>
     {
         public static RenderTexture Output { get; private set; }
@@ -38,6 +39,7 @@ namespace FPTemplate.World.Portals
             PortalCamera.transform.SetParent(transform);
             PortalCamera.CopyFrom(RootCamera);
             PortalCamera.enabled = false;
+            PortalCamera.clearFlags = CameraClearFlags.Nothing;
             PortalCamera.targetTexture = Output;
             Renderers = GetComponentsInChildren<Renderer>();
         }
@@ -46,9 +48,11 @@ namespace FPTemplate.World.Portals
         {
             RootCamera = CameraController.Instance.GetComponent<Camera>();
             Output = new RenderTexture(Screen.width, Screen.height, 8);
+            Output.enableRandomWrite = true;
+            Output.Create();
         }
 
-        public bool ShouldRender(PortalRenderer parent, RotationalBounds relativeBounds, out Rect screenRect)
+        public bool ShouldRender(PortalRenderer parent, RotationalBounds portalBounds, out Rect screenRect)
         {
             screenRect = default;
             if (!Destination || !gameObject.activeInHierarchy)
@@ -56,11 +60,18 @@ namespace FPTemplate.World.Portals
                 return false;
             }
             var camera = parent?.PortalCamera ? parent.PortalCamera : RootCamera;
-            if (!camera.BoundsWithinFrustrum(relativeBounds))
+
+            var min = portalBounds.min;
+            var max = portalBounds.max;
+
+            if (!camera.IsLineInFrustum(max, min))
             {
+                Debug.DrawLine(max, min, Color.red, 1);
                 return false;
             }
-            screenRect = relativeBounds.WorldBoundsToScreenRect(camera);
+
+            Debug.DrawLine(max, min, Color.green, 0);
+            screenRect = portalBounds.WorldBoundsToScreenRect(camera);
             if (screenRect == default || !screenRect.ScreenRectIsOnScreen())
             {
                 return false;
@@ -80,14 +91,20 @@ namespace FPTemplate.World.Portals
 
         public void Render(PortalRenderer parent, List<PortalRenderer> renderChain)
         {
-            if (renderChain?.Contains(this) ?? false)
+            if (renderChain.Count > 1)
             {
                 return;
             }
             var portalMatrix = PortalUtilities.GetPortalMatrix(transform, Destination.transform, PortalConfiguration);
-            PortalUtilities.DebugScreenRect(this, parent, portalMatrix);
-            var relativeBounds = portalMatrix * Bounds;
-            if (!ShouldRender(parent, relativeBounds, out var screenRect) || RenderedThisFrame)
+            /*for (int i = renderChain.Count - 1; i >= 1; i--)
+            {
+                var portal = renderChain[i];
+                var nextPortal = renderChain[i - 1];
+                portalMatrix = PortalUtilities.GetPortalMatrix(portal.transform, nextPortal.transform, portal.PortalConfiguration) * portalMatrix;
+            }*/
+            PortalUtilities.DebugScreenRect(this, parent);
+            var bounds = Bounds;
+            if (!ShouldRender(parent, bounds, out var screenRect) || RenderedThisFrame)
             {
                 return;
             }
@@ -104,17 +121,17 @@ namespace FPTemplate.World.Portals
             CameraScissorRectUtility.SetScissorRect(PortalCamera, viewportRect);
 
             // Add to renderchain
-            var nextChain = renderChain?.ToList() ?? new List<PortalRenderer>();
+            /*var nextChain = renderChain?.ToList() ?? new List<PortalRenderer>();
             nextChain.Add(this);
             foreach (var neighbour in Neighbours)
             {
                 neighbour.Render(this, nextChain);
-            }
+            }*/
 
-            Shader.SetGlobalMatrix("_PortalMatrix", CameraExtensions.GetWorldToViewportMatrix(PortalCamera, Matrix4x4.identity));
+            Shader.SetGlobalMatrix("_PortalMatrix", CameraExtensions.GetWorldToViewportMatrix(PortalCamera, portalMatrix));
+            Shader.SetGlobalTexture("_PortalTexture", Output);
             Shader.SetGlobalVector("_WorldClipPos", transform.position - Bounds.center);
             Shader.SetGlobalVector("_WorldClipNormal", Destination.transform.localToWorldMatrix.MultiplyVector(Destination.PortalConfiguration.Normal));
-
             PortalCamera.RenderDontRestore();
 
             CameraController.Instance.SetGlobalVariables();
@@ -122,26 +139,7 @@ namespace FPTemplate.World.Portals
 
         private void LateUpdate()
         {
-            if (m_propertyBlock == null)
-            {
-                m_propertyBlock = new MaterialPropertyBlock();
-            }
-            /*if (ShouldRender)
-            {
-                m_propertyBlock.SetFloat("_Mask", 0);
-            }
-            else
-            {
-                m_propertyBlock.SetFloat("_Mask", 1);
-            }
-            Shader.SetGlobalMatrix("_PortalMatrix", CameraExtensions.GetWorldToViewportMatrix(RootCamera, Matrix4x4.identity));
-            Shader.SetGlobalInt("_IsRecursive", 0);*/
-            m_propertyBlock.SetTexture("PortalTexture", Output);
-            foreach (var r in Renderers)
-            {
-                r.SetPropertyBlock(m_propertyBlock);
-            }
-            Render(null, null);
+            Render(null, new List<PortalRenderer>());
         }
 
         protected override void OnDestroy()
