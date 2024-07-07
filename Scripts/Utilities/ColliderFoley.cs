@@ -19,11 +19,11 @@ namespace FPTemplate.World
 			{
 				return;
 			}
-			var tempAudioSource = ObjectPool<AudioSource>.Get();
+			/*var tempAudioSource = ObjectPool<AudioSource>.Get();
 			tempAudioSource.transform.position = transform.position;
 			tempAudioSource.spatialBlend = 1;
 			tempAudioSource.PlayOneShot(ImpactClips.Random(), Volume);
-			ObjectPool<AudioSource>.Release(tempAudioSource);
+			ObjectPool<AudioSource>.Release(tempAudioSource);*/
 		}
 	}
 }

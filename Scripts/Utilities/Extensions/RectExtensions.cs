@@ -1,9 +1,71 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace FPTemplate.Utilities.Extensions
 {
     public static class RectExtensions
     {
+        public static Rect CropToOuterRect(this Rect inner, Rect outer)
+        {
+            // Ensure the inner rect is within the bounds of the outer rect
+            float xMin = Mathf.Max(inner.xMin, outer.xMin);
+            float yMin = Mathf.Max(inner.yMin, outer.yMin);
+            float xMax = Mathf.Min(inner.xMax, outer.xMax);
+            float yMax = Mathf.Min(inner.yMax, outer.yMax);
+
+            // Calculate the cropped width and height
+            float width = Mathf.Max(0, xMax - xMin);
+            float height = Mathf.Max(0, yMax - yMin);
+
+            return new Rect(xMin, yMin, width, height);
+        }
+
+        public static List<Rect> OccludeRects(List<Rect> rects)
+        {
+            for (int i = 0; i < rects.Count; i++)
+            {
+                Rect current = rects[i];
+                for (int j = rects.Count - 1; j > i; j--)
+                {
+                    Rect top = rects[j];
+                    if (top.Overlaps(current))
+                    {
+                        if (top.Contains(current))
+                        {
+                            current = Rect.zero; // Completely occluded
+                            break;
+                        }
+                        else
+                        {
+                            current = ClipRect(current, top); // Partially occluded
+                        }
+                    }
+                }
+                rects[i] = current;
+            }
+            return rects;
+        }
+
+        public static Rect ClipRect(Rect lower, Rect upper)
+        {
+            if (lower.xMin < upper.xMin)
+                lower.xMax = Mathf.Min(lower.xMax, upper.xMin);
+            if (lower.xMax > upper.xMax)
+                lower.xMin = Mathf.Max(lower.xMin, upper.xMax);
+            if (lower.yMin < upper.yMin)
+                lower.yMax = Mathf.Min(lower.yMax, upper.yMin);
+            if (lower.yMax > upper.yMax)
+                lower.yMin = Mathf.Max(lower.yMin, upper.yMax);
+
+            return lower;
+        }
+
+        public static bool Contains(this Rect rect, Rect other)
+        {
+            return rect.xMin <= other.xMin && rect.xMax >= other.xMax &&
+                   rect.yMin <= other.yMin && rect.yMax >= other.yMax;
+        }
+
         public static Rect Encapsulate(this Rect rect, Rect other)
         {
             rect = rect.Encapsulate(other.min);

@@ -1,4 +1,9 @@
-﻿using FPTemplate.Utilities.Extensions;
+﻿using FPTemplate.Actors;
+using FPTemplate.Utilities.Extensions;
+using FPTemplate.Utilities.Maths;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -6,31 +11,31 @@ namespace FPTemplate.World.Portals
 {
     public static class PortalUtilities
     {
-        private static Canvas m_debugCanvas;
-        public static void DebugScreenRect(PortalRenderer renderer, PortalRenderer parent)
+
+        public static bool TryGetScreenRect(PortalConfiguration portal, RotationalBounds portalBounds, out Rect screenRect)
         {
-            if (!m_debugCanvas)
+            screenRect = default;
+            var camera = CameraController.Instance.Camera;
+            if (Vector3.Dot(camera.transform.forward, portalBounds.rotation * portal.Normal) < 0)
             {
-                m_debugCanvas = new GameObject("PortalDebug").AddComponent<Canvas>();
-                m_debugCanvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                m_debugCanvas.gameObject.AddComponent<CanvasScaler>();
-                var rt = m_debugCanvas.GetComponent<RectTransform>();
-                rt.pivot = Vector2.zero;
+                return false;
             }
-            var shouldRender = renderer.ShouldRender(parent, renderer.Bounds, out var screenRect);
-            var name = $"sr_{renderer.name}_{parent?.name ?? "root"}";
-            var img = m_debugCanvas.transform.Find(name)?.GetComponent<Image>();
-            if(img == null)
+            var points = GeometryExtensions.GetQuadCorners(portalBounds.rotation * portal.Normal, portalBounds.center, portal.Size);
+            if (!camera.IsLineInFrustum(points[0], points[2]) && !camera.IsLineInFrustum(points[1], points[3]))
             {
-                img = new GameObject(name).AddComponent<Image>();
-                img.transform.SetParent(m_debugCanvas.transform, false);
-                img.rectTransform.pivot = Vector2.zero;
-                img.rectTransform.anchorMax = Vector2.zero;
-                img.rectTransform.anchorMin = Vector2.zero;
+                return false;
             }
-            img.color = (shouldRender ? Color.green : Color.red).WithAlpha(.02f);
-            img.rectTransform.sizeDelta = screenRect.size;
-            img.rectTransform.anchoredPosition = screenRect.position;
+            screenRect = portalBounds.WorldBoundsToScreenRect(camera);
+            if (screenRect == default || !screenRect.ScreenRectIsOnScreen())
+            {
+                return false;
+            }
+            screenRect = screenRect.ClipToScreen();
+            if (screenRect.width <= 0 || screenRect.height <= 0)
+            {
+                return false;
+            }
+            return true;
         }
 
         public static Matrix4x4 GetReflectionMatrix(Vector3 planeNormal)

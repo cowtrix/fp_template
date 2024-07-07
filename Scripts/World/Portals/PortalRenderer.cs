@@ -6,31 +6,29 @@ using FPTemplate.Actors;
 using vSplines;
 using FPTemplate.Utilities.Maths;
 using System.Collections.Generic;
+using FPTemplate.Utilities.Helpers;
+using System.Reflection;
 
 namespace FPTemplate.World.Portals
 {
-
 
     public class PortalRenderer : TrackedObject<PortalRenderer>
     {
         public static RenderTexture Output { get; private set; }
         public static Camera RootCamera { get; set; }
-        private static MaterialPropertyBlock m_propertyBlock;
-        public Renderer[] Renderers { get; private set; } = new Renderer[0];
+        public Matrix4x4 PortalMatrix => PortalUtilities.GetPortalMatrix(transform, Destination.transform, PortalConfiguration);
         public RotationalBounds Bounds => new RotationalBounds(transform.position, PortalConfiguration.Size, Quaternion.LookRotation(transform.localToWorldMatrix.MultiplyVector(PortalConfiguration.Normal)).normalized);
-        public bool RenderedThisFrame { get; set; }
+        public Mesh Mesh { get; set; }
         public Camera PortalCamera { get; private set; }
         public PortalRenderer Destination;
         public PortalRenderer[] Neighbours;
         public Material PortalMaterial;
         public PortalConfiguration PortalConfiguration;
 
+        public PortalCluster Cluster;
+
         private void Start()
         {
-            if (Neighbours.Contains(this))
-            {
-                throw new System.Exception("Neighbours can't contain self");
-            }
             if (!Output)
             {
                 SetupSharedResources();
@@ -41,7 +39,12 @@ namespace FPTemplate.World.Portals
             PortalCamera.enabled = false;
             PortalCamera.clearFlags = CameraClearFlags.Nothing;
             PortalCamera.targetTexture = Output;
-            Renderers = GetComponentsInChildren<Renderer>();
+            Neighbours.Add(this);
+            Mesh = MeshExtensions.CreateQuadMesh(PortalConfiguration.Size, -PortalConfiguration.Normal);
+            var mf = gameObject.AddComponent<MeshFilter>();
+            mf.sharedMesh = Mesh;
+            var mr = gameObject.AddComponent<MeshRenderer>();
+            mr.sharedMaterial = PortalMaterial;
         }
 
         private static void SetupSharedResources()
@@ -52,65 +55,80 @@ namespace FPTemplate.World.Portals
             Output.Create();
         }
 
-        public bool ShouldRender(PortalRenderer parent, RotationalBounds portalBounds, out Rect screenRect)
+        private static bool TestLine(Camera cam, Vector3 p1, Vector3 p2)
         {
-            screenRect = default;
-            if (!Destination || !gameObject.activeInHierarchy)
+            if (!cam.IsLineInFrustum(p1, p2))
             {
+                Debug.DrawLine(p1, p2, Color.red, 1);
                 return false;
             }
-            var camera = parent?.PortalCamera ? parent.PortalCamera : RootCamera;
-
-            var min = portalBounds.min;
-            var max = portalBounds.max;
-
-            if (!camera.IsLineInFrustum(max, min))
-            {
-                Debug.DrawLine(max, min, Color.red, 1);
-                return false;
-            }
-
-            Debug.DrawLine(max, min, Color.green, 0);
-            screenRect = portalBounds.WorldBoundsToScreenRect(camera);
-            if (screenRect == default || !screenRect.ScreenRectIsOnScreen())
-            {
-                return false;
-            }
-            screenRect = screenRect.ClipToScreen();
-            if (screenRect.width <= 0 || screenRect.height <= 0)
-            {
-                return false;
-            }
+            Debug.DrawLine(p1, p2, Color.green, 0);
             return true;
         }
 
-        private void Update()
+        public void Render(PortalState state)
         {
-            RenderedThisFrame = false;
-        }
+            PortalCamera.transform.position = state.TransformMatrix.MultiplyPoint3x4(RootCamera.transform.position);
+            PortalCamera.transform.forward = state.TransformMatrix.MultiplyVector(RootCamera.transform.forward);
+            CameraScissorRectUtility.SetScissorRect(PortalCamera, state.ViewportRect);
+            
+            //Shader.SetGlobalMatrix("_PortalMatrix", lookBackMatrix);
+            Shader.SetGlobalTexture("_PortalTexture", Output);
+            Shader.SetGlobalVector("_WorldClipPos", transform.position - Bounds.center);
+            Shader.SetGlobalVector("_WorldClipNormal", Destination.transform.localToWorldMatrix.MultiplyVector(Destination.PortalConfiguration.Normal));
 
-        public void Render(PortalRenderer parent, List<PortalRenderer> renderChain)
-        {
-            if (renderChain.Count > 1)
+            var canvasHackField = typeof(Canvas).GetField("willRenderCanvases", BindingFlags.NonPublic | BindingFlags.Static);
+            var canvasHackObject = canvasHackField.GetValue(null);
+            canvasHackField.SetValue(null, null);
+
+            DebugHelper.DrawCube(PortalCamera.transform.position, new Vector3(.25f, .25f, .5f) / 2f, PortalCamera.transform.rotation, Color.blue, 0);
+            PortalCamera.gameObject.SetActive(true);
+            PortalCamera.RenderDontRestore();
+
+            canvasHackField.SetValue(null, canvasHackObject);
+            CameraController.Instance.SetGlobalVariables();
+
+            /*if (!gameObject.activeInHierarchy || renderChain.Count > 1)
             {
                 return;
             }
-            var portalMatrix = PortalUtilities.GetPortalMatrix(transform, Destination.transform, PortalConfiguration);
-            /*for (int i = renderChain.Count - 1; i >= 1; i--)
+            PortalCamera.gameObject.SetActive(false);
+            var parent = renderChain.LastOrDefault();
+            //var portalMatrix = PortalUtilities.GetPortalMatrix(transform, Destination.transform, PortalConfiguration);
+            var lookBackMatrix = Matrix4x4.identity;
+            for (int i = renderChain.Count - 1; i >= 0; i--)
             {
                 var portal = renderChain[i];
-                var nextPortal = renderChain[i - 1];
-                portalMatrix = PortalUtilities.GetPortalMatrix(portal.transform, nextPortal.transform, portal.PortalConfiguration) * portalMatrix;
-            }*/
-            PortalUtilities.DebugScreenRect(this, parent);
-            var bounds = Bounds;
-            if (!ShouldRender(parent, bounds, out var screenRect) || RenderedThisFrame)
+                var parentLookback = renderChain.ElementAtOrDefault(i - 1)?.transform ?? parent.transform;
+                lookBackMatrix = PortalUtilities.GetPortalMatrix(parentLookback, portal.transform, portal.PortalConfiguration).inverse * lookBackMatrix;
+            }
+            var bounds = lookBackMatrix * Bounds;
+            //PortalUtilities.DebugScreenRect(this, parent, bounds);
+            DebugHelper.DrawCube(bounds.center, bounds.extents, bounds.rotation, Color.yellow, 0);
+            if (!ShouldRender(bounds, out var screenRect) || RenderedThisFrame)
             {
                 return;
             }
+
+            var portalMatrix = lookBackMatrix * PortalUtilities.GetPortalMatrix(transform, Destination.transform, PortalConfiguration);
 
             // Setup camera
             var camera = parent?.PortalCamera ? parent.PortalCamera : RootCamera;
+            PortalCamera.transform.position = portalMatrix.MultiplyPoint3x4(camera.transform.position);
+            PortalCamera.transform.forward = portalMatrix.MultiplyVector(camera.transform.forward);
+
+            // Render children
+            var nextChain = renderChain?.ToList() ?? new List<PortalRenderer>();
+            nextChain.Add(this);
+            foreach (var neighbour in Neighbours)
+            {
+                if (!neighbour)
+                {
+                    continue;
+                }
+                neighbour.Render(nextChain);
+            }
+
             PortalCamera.transform.position = portalMatrix.MultiplyPoint3x4(camera.transform.position);
             PortalCamera.transform.forward = portalMatrix.MultiplyVector(camera.transform.forward);
             var viewportRect = screenRect.ScreenRectToViewportRect();
@@ -118,34 +136,23 @@ namespace FPTemplate.World.Portals
             {
                 return;
             }
+
             CameraScissorRectUtility.SetScissorRect(PortalCamera, viewportRect);
 
-            // Add to renderchain
-            /*var nextChain = renderChain?.ToList() ?? new List<PortalRenderer>();
-            nextChain.Add(this);
-            foreach (var neighbour in Neighbours)
+            if (parent)
             {
-                neighbour.Render(this, nextChain);
-            }*/
-
-            Shader.SetGlobalMatrix("_PortalMatrix", CameraExtensions.GetWorldToViewportMatrix(PortalCamera, portalMatrix));
+                portalMatrix = PortalUtilities.GetPortalMatrix(parent.transform, transform, PortalConfiguration);
+            }
+            PortalCamera.transform.position = portalMatrix.MultiplyPoint3x4(camera.transform.position);
+            PortalCamera.transform.forward = portalMatrix.MultiplyVector(camera.transform.forward);
+            Shader.SetGlobalMatrix("_PortalMatrix", lookBackMatrix);
             Shader.SetGlobalTexture("_PortalTexture", Output);
             Shader.SetGlobalVector("_WorldClipPos", transform.position - Bounds.center);
             Shader.SetGlobalVector("_WorldClipNormal", Destination.transform.localToWorldMatrix.MultiplyVector(Destination.PortalConfiguration.Normal));
+            PortalCamera.gameObject.SetActive(true);
             PortalCamera.RenderDontRestore();
 
-            CameraController.Instance.SetGlobalVariables();
-        }
-
-        private void LateUpdate()
-        {
-            Render(null, new List<PortalRenderer>());
-        }
-
-        protected override void OnDestroy()
-        {
-            Destroy(Output);
-            base.OnDestroy();
+            CameraController.Instance.SetGlobalVariables();*/
         }
 
         private void OnDrawGizmos()
@@ -169,6 +176,10 @@ namespace FPTemplate.World.Portals
             Gizmos.color = Color.yellow;
             foreach (var neighbour in Neighbours)
             {
+                if (!neighbour)
+                {
+                    continue;
+                }
                 Gizmos.DrawLine(transform.position, neighbour.transform.position);
             }
 

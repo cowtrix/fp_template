@@ -47,7 +47,7 @@ namespace FPTemplate.Utilities.Extensions
 			Handles.color = Color.white;
 		}
 
-		public static void DrawSpline(Vector3 start, Vector3 end)
+        public static void DrawSpline(Vector3 start, Vector3 end)
 		{
 			Handles.DrawLine(start, end);
 		}

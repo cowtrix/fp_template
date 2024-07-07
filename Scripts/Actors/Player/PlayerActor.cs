@@ -28,7 +28,7 @@ namespace FPTemplate.Actors.Player
 			if (isHit)
 			{
 				Debug.DrawLine(cameraPos, interactionHit.point, Color.yellow);
-				DebugHelper.DrawPoint(interactionHit.point, .5f, Color.yellow, 0);
+				DebugHelper.DrawPoint(interactionHit.point, .05f, Color.yellow, 0);
 				var interactable = interactionHit.collider.GetComponent<Interactable>() ?? interactionHit.collider.GetComponent<InteractionForwarder>()?.Interactable;
 				if (interactable && interactable.enabled && interactionHit.distance < interactable.InteractionSettings.MaxFocusDistance)
 				{

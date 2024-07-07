@@ -80,6 +80,7 @@ namespace FPTemplate.Utilities.Extensions
             return Rect.MinMaxRect(xMin, yMin, xMax, yMax);
         }
 
+
         public static bool IsLineInFrustum(this Camera camera, Vector3 pointA, Vector3 pointB)
         {
             Plane[] frustumPlanes = GeometryUtility.CalculateFrustumPlanes(camera);
@@ -87,6 +88,7 @@ namespace FPTemplate.Utilities.Extensions
             // Check if either point is inside the frustum
             if (camera.IsPointInCameraFrustum(pointA) || camera.IsPointInCameraFrustum(pointB))
             {
+                Debug.DrawLine(pointA, pointB, Color.green);
                 return true;
             }
 
@@ -95,15 +97,15 @@ namespace FPTemplate.Utilities.Extensions
             {
                 if (plane.GetSide(pointA) != plane.GetSide(pointB))
                 {
-                    var closestPointA = plane.ClosestPointOnPlane(pointA);
-                    var closestPointB = plane.ClosestPointOnPlane(pointB);
-                    if(camera.IsPointInCameraFrustum(closestPointA) || camera.IsPointInCameraFrustum(closestPointB))
+                    var closestPointA = plane.ClosestPointOnPlane(pointA) + plane.normal * .01f;
+                    var closestPointB = plane.ClosestPointOnPlane(pointB) + plane.normal * .01f;
+                    if (camera.IsPointInCameraFrustum(closestPointA) || camera.IsPointInCameraFrustum(closestPointB))
                     {
                         return true;
                     }
                 }
             }
-
+            Debug.DrawLine(pointA, pointB, Color.red);
             return false;
         }
 
@@ -133,7 +135,7 @@ namespace FPTemplate.Utilities.Extensions
             Matrix4x4 viewMatrix = camera.worldToCameraMatrix;
 
             // Get the camera's projection matrix (camera space to clip space)
-            Matrix4x4 projectionMatrix = camera.nonJitteredProjectionMatrix;
+            Matrix4x4 projectionMatrix = camera.projectionMatrix;
 
             // Apply the TRS matrix to the world positions before transforming to camera space
             Matrix4x4 worldToCameraMatrix = viewMatrix * trsMatrix;

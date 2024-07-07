@@ -1,33 +1,82 @@
-﻿using System.Collections.Generic;
+﻿using FPTemplate.Utilities.Extensions;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace FPTemplate.Utilities
 {
-	public static class ObjectPool<T> where T : class
-	{
-		private static Queue<T> m_pool = new Queue<T>();
+    public interface IPooledObject
+    {
+        public GameObject Source { get; set; }
+    }
 
-		public static T Get()
-		{
-			if (m_pool.Count == 0)
-			{
-				if (typeof(Component).IsAssignableFrom(typeof(T)))
-				{
-					var newObj = new GameObject($"ObjectPool_{typeof(T)}");
-					newObj.hideFlags = HideFlags.HideAndDontSave;
-					m_pool.Enqueue(newObj.AddComponent(typeof(T)) as T);
-				}
-				else
-				{
-					throw new System.Exception($"Unsupported type {typeof(T)}");
-				}
-			}
-			return m_pool.Dequeue();
-		}
+    public class ObjectPool : Singleton<ObjectPool>
+    {
+        private class Pool
+        {
+            public List<GameObject> ActiveInstances = new List<GameObject>();
+            public List<GameObject> InactiveInstances = new List<GameObject>();
+        }
+        private Dictionary<GameObject, Pool> m_pools = new Dictionary<GameObject, Pool>();
+        private Transform m_inactiveInstances;
+        public override void Awake()
+        {
+            m_inactiveInstances = new GameObject("Inactive Pooled Objects").transform;
+            base.Awake();
+        }
 
-		public static void Release(T obj)
-		{
-			m_pool.Enqueue(obj);
-		}
-	}
+        public GameObject Get(GameObject prefab, Transform parent = null)
+        {
+            if (!m_pools.TryGetValue(prefab, out var pool))
+            {
+                pool = new Pool();
+                m_pools.Add(prefab, pool);
+            }
+            GameObject instance;
+            if (!pool.InactiveInstances.Any())
+            {
+                instance = CreateNewInstance(prefab, pool);
+            }
+            else
+            {
+                instance = pool.InactiveInstances.First();
+                pool.InactiveInstances.Remove(instance);
+                pool.ActiveInstances.Add(instance);
+            }
+            StartCoroutine(SetParent(instance.transform, parent));
+            instance.SetActive(true);
+            var pooledObj = instance.GetComponentByInterface<IPooledObject>();
+            if (pooledObj != null && !pooledObj.Equals(null))
+            {
+                pooledObj.Source = prefab;
+            }
+            return instance;
+        }
+
+        private GameObject CreateNewInstance(GameObject prefab, Pool pool)
+        {
+            var newInstance = Instantiate(prefab);
+            pool.ActiveInstances.Add(newInstance);
+            return newInstance;
+        }
+
+        public void Release(GameObject prefab, GameObject instance)
+        {
+            if (!m_pools.TryGetValue(prefab, out var pool))
+            {
+                pool = new Pool();
+                m_pools.Add(prefab, pool);
+            }
+            pool.ActiveInstances.Remove(instance);
+            pool.InactiveInstances.Add(instance);
+            StartCoroutine(SetParent(instance.transform, m_inactiveInstances));
+        }
+
+        private IEnumerator SetParent(Transform target, Transform parent)
+        {
+            yield return null;
+            target.SetParent(parent);
+        }
+    }
 }
