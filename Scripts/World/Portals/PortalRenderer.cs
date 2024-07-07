@@ -14,12 +14,12 @@ namespace FPTemplate.World.Portals
 
     public class PortalRenderer : TrackedObject<PortalRenderer>
     {
+        public static Camera PortalCamera { get; private set; }
         public static RenderTexture Output { get; private set; }
         public static Camera RootCamera { get; set; }
         public Matrix4x4 PortalMatrix => PortalUtilities.GetPortalMatrix(transform, Destination.transform, PortalConfiguration);
         public RotationalBounds Bounds => new RotationalBounds(transform.position, PortalConfiguration.Size, Quaternion.LookRotation(transform.localToWorldMatrix.MultiplyVector(PortalConfiguration.Normal)).normalized);
         public Mesh Mesh { get; set; }
-        public Camera PortalCamera { get; private set; }
         public PortalRenderer Destination;
         public PortalRenderer[] Neighbours;
         public Material PortalMaterial;
@@ -33,12 +33,7 @@ namespace FPTemplate.World.Portals
             {
                 SetupSharedResources();
             }
-            PortalCamera = new GameObject("PortalCamera").AddComponent<Camera>();
-            PortalCamera.transform.SetParent(transform);
-            PortalCamera.CopyFrom(RootCamera);
-            PortalCamera.enabled = false;
-            PortalCamera.clearFlags = CameraClearFlags.Nothing;
-            PortalCamera.targetTexture = Output;
+            
             Neighbours.Add(this);
             Mesh = MeshExtensions.CreateQuadMesh(PortalConfiguration.Size, -PortalConfiguration.Normal);
             var mf = gameObject.AddComponent<MeshFilter>();
@@ -53,6 +48,12 @@ namespace FPTemplate.World.Portals
             Output = new RenderTexture(Screen.width, Screen.height, 8);
             Output.enableRandomWrite = true;
             Output.Create();
+            PortalCamera = new GameObject("PortalCamera").AddComponent<Camera>();
+            PortalCamera.CopyFrom(RootCamera);
+            PortalCamera.enabled = false;
+            PortalCamera.clearFlags = CameraClearFlags.Nothing;
+            PortalCamera.targetTexture = Output;
+            PortalCamera.forceIntoRenderTexture = true;
         }
 
         private static bool TestLine(Camera cam, Vector3 p1, Vector3 p2)
@@ -76,16 +77,11 @@ namespace FPTemplate.World.Portals
             Shader.SetGlobalTexture("_PortalTexture", Output);
             Shader.SetGlobalVector("_WorldClipPos", transform.position - Bounds.center);
             Shader.SetGlobalVector("_WorldClipNormal", Destination.transform.localToWorldMatrix.MultiplyVector(Destination.PortalConfiguration.Normal));
-
-            var canvasHackField = typeof(Canvas).GetField("willRenderCanvases", BindingFlags.NonPublic | BindingFlags.Static);
-            var canvasHackObject = canvasHackField.GetValue(null);
-            canvasHackField.SetValue(null, null);
-
+                       
             DebugHelper.DrawCube(PortalCamera.transform.position, new Vector3(.25f, .25f, .5f) / 2f, PortalCamera.transform.rotation, Color.blue, 0);
             PortalCamera.gameObject.SetActive(true);
-            PortalCamera.RenderDontRestore();
+            PortalCamera.Render();
 
-            canvasHackField.SetValue(null, canvasHackObject);
             CameraController.Instance.SetGlobalVariables();
 
             /*if (!gameObject.activeInHierarchy || renderChain.Count > 1)
