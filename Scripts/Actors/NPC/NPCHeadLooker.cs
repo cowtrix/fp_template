@@ -36,7 +36,7 @@ namespace FPTemplate.Actors.NPC
 
         private void Update()
         {
-            TransformExtensions.RotateTowardsPosition(transform, CurrentLookPosition, Time.deltaTime * LookSpeed, Quaternion.identity);
+            TransformExtensions.RotateTowardsPosition(transform, CurrentLookPosition, transform.parent.up, Time.deltaTime * LookSpeed, Quaternion.identity);
         }
 
         private void OnDrawGizmosSelected()

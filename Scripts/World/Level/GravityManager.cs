@@ -31,17 +31,17 @@ namespace FPTemplate.World
 			{
 				GravitySources = GravitySource.Instances.ToList();
 			}
-			var f = Vector3.zero;
+			var f = DefaultGravity;
 			foreach (var gravitySource in GravitySources)
 			{
-				var gf = gravitySource.GetGravityForce(worldPos);
+				var gf = gravitySource.GetGravityForce(worldPos, out var strength);
 				if (gf.sqrMagnitude > 0 && gravitySource.Exclusive)
 				{
 					return gf;
 				}
-				f += gf;
+				f = Vector3.Lerp(f, gf, strength);
 			}
-			return f + DefaultGravity;
+			return f;
 		}
 	}
 }

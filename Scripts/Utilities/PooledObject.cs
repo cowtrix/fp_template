@@ -7,6 +7,14 @@ namespace FPTemplate.Utilities
         public GameObject Source { get => Prefab; set => Prefab = value; }
         public GameObject Prefab;
 
+        private void OnValidate()
+        {
+            if (!Prefab)
+            {
+                Prefab = gameObject;
+            }
+        }
+
         private void OnDisable()
         {
             if (Prefab && ObjectPool.HasInstance())

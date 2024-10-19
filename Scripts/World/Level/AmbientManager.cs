@@ -13,16 +13,12 @@ namespace FPTemplate.World
         public AmbientZone CurrentZone { get; private set; }
         public MuzakPlayer Player => GetComponent<MuzakPlayer>();
         public List<MuzakTrack> AmbientTracks;
-        public float LightingTransitionSpeed = 1;
-        public AmbientLightingState DefaultLighting;
-        private AmbientLightingState m_currentTarget;
 
         private void Start()
         {
             Player.Track = AmbientTracks.Random();
             StartCoroutine(UpdateZone());
             StartCoroutine(PlayAmbientMusic());
-            StartCoroutine(PlayAmbientLighting());
             Player?.EventListener.AddListener(OnEvent);
         }
 
@@ -31,31 +27,6 @@ namespace FPTemplate.World
             if (ev.EventType == MuzakPlayerEvent.eEventType.TrackLoopEnded)
             {
                 Player.Track = AmbientTracks.Random();
-            }
-        }
-
-        [ContextMenu("Apply Default Lighting")]
-        public void ApplyDefaultLighting()
-        {
-            DefaultLighting.Apply();
-        }
-
-        IEnumerator PlayAmbientLighting()
-        {
-            CurrentLightingState = DefaultLighting;
-            while (true)
-            {
-                yield return null;
-                if (!CurrentZone)
-                {
-                    m_currentTarget = DefaultLighting;
-                }
-                else
-                {
-                    m_currentTarget = CurrentZone.AmbientLighting;
-                }
-                CurrentLightingState = AmbientLightingState.Lerp(CurrentLightingState, m_currentTarget, Time.deltaTime * LightingTransitionSpeed);
-                CurrentLightingState.Apply();
             }
         }
 

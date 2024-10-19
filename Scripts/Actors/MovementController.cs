@@ -2,12 +2,14 @@ using FPTemplate.Utilities;
 using FPTemplate.Utilities.Extensions;
 using FPTemplate.World;
 using UnityEngine;
+using UnityEngine.ProBuilder.Shapes;
 
 namespace FPTemplate.Actors
 {
 
     public class MovementController : ExtendedMonoBehaviour, IMovementController
     {
+        public bool IgnoreGravity { get; set; }
         public bool IsGrounded { get; private set; }
         public float TimeUngrounded { get; private set; }
         public Vector3 MoveDirection { get; set; }
@@ -24,6 +26,7 @@ namespace FPTemplate.Actors
         public float RotateTowardGravitySpeed = 10;
         public Transform GroundingPoint;
         public float PushOutSpeed = 10;
+        public float UngroundedMoveSpeed = .1f;
 
         protected bool m_inputJump;
 
@@ -35,7 +38,7 @@ namespace FPTemplate.Actors
         protected virtual void FixedUpdate()
         {
             var dt = Time.fixedDeltaTime;
-            CurrentGravity = GravityManager.Instance.GetGravityForce(transform.position);
+            CurrentGravity = IgnoreGravity ? Vector3.zero : GravityManager.Instance.GetGravityForce(transform.position);
 
             var groundingDistance = Vector3.Distance(GroundingPoint.position, transform.position);
             IsGrounded = Physics.Raycast(transform.position, CurrentGravity, out var groundHit, groundingDistance * 1.01f, CollisionMask, QueryTriggerInteraction.Ignore);
@@ -45,21 +48,19 @@ namespace FPTemplate.Actors
             if (!IsGrounded)
             {
                 Rigidbody.AddForce(CurrentGravity * dt, ForceMode.Acceleration);
+                Rigidbody.linearDamping = 2;
                 TimeUngrounded += dt;
+                m_inputJump = false;
             }
             else
             {
                 TimeUngrounded = 0;
+                Rigidbody.linearDamping = 4;
             }
 
             {
-                // Straighten up
-                var straightenQuat = Quaternion.Euler(Quaternion.FromToRotation(Vector3.up, -CurrentGravity.normalized)
-                    .eulerAngles.xy().x0z(Rigidbody.rotation.eulerAngles.y));
-                var straightenLerp = RotateTowardGravitySpeed * dt * (CurrentGravity.magnitude / 1000f);
-                Rigidbody.rotation = Quaternion.Lerp(Rigidbody.rotation, straightenQuat, straightenLerp);
-                //Rigidbody.rotation = straightenQuat;
-                Debug.DrawLine(transform.position, transform.position + straightenQuat * transform.forward, Color.yellow);
+                var prevSpin = transform.localRotation.eulerAngles.y;
+                transform.up = -CurrentGravity.normalized;
 
                 // Push out
                 if (groundHit.distance < groundingDistance)
@@ -69,14 +70,14 @@ namespace FPTemplate.Actors
             }
 
             {
+                var worldVelocityDirection = LookTransform.localToWorldMatrix.MultiplyVector(new Vector3(MoveDirection.x, 0, MoveDirection.z));
+
                 // Move from input
                 if (m_inputJump && IsGrounded)
                 {
-                    Rigidbody.AddForce(transform.localToWorldMatrix.MultiplyVector(JumpForce * transform.up) * Rigidbody.mass);
+                    Rigidbody.AddForce(JumpForce * transform.up * Rigidbody.mass);
                     m_inputJump = false;
                 }
-
-                var worldVelocityDirection = LookTransform.localToWorldMatrix.MultiplyVector(new Vector3(MoveDirection.x, 0, MoveDirection.z));
 
                 if (IsGrounded)
                 {
@@ -86,7 +87,7 @@ namespace FPTemplate.Actors
                 }
                 else
                 {
-                    worldVelocityDirection = MutateUngroundedVelocity(worldVelocityDirection);
+                    worldVelocityDirection = MutateUngroundedVelocity(worldVelocityDirection) * MovementSpeed;
                 }
 
                 Debug.DrawLine(transform.position, transform.position + worldVelocityDirection, Color.cyan, 5);
@@ -107,7 +108,7 @@ namespace FPTemplate.Actors
 
         protected virtual Vector3 MutateUngroundedVelocity(Vector3 worldVelocityDirection)
         {
-            worldVelocityDirection *= 0.01f;
+            worldVelocityDirection *= UngroundedMoveSpeed;
             return worldVelocityDirection;
         }
 

@@ -9,5 +9,6 @@ namespace FPTemplate.Actors
         bool IsGrounded { get; }
         void MoveInput(Vector2 dir);
         void Jump();
+        Rigidbody Rigidbody { get; }
     }
 }

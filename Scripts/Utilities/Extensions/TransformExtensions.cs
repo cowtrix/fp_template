@@ -25,23 +25,23 @@ namespace FPTemplate.Utilities.Extensions
             }
         }
 
-        public static void RotateTowardsPosition(this Transform t, Vector3 worldPos, float maxAngle, Quaternion extraRotation)
+        public static void RotateTowardsPosition(this Transform t, Vector3 worldPos, Vector3 upVector, float maxAngle, Quaternion extraRotation)
         {
-            t.rotation = RotateTowardsPosition(t.rotation, t.position, worldPos, maxAngle, extraRotation);
+            t.rotation = RotateTowardsPosition(t.rotation, t.position, upVector, worldPos, maxAngle, extraRotation);
         }
 
-        public static Quaternion RotateTowardsPosition(this Quaternion rootRotation, Vector3 rootPosition, Vector3 targetPosition, float maxAngle, Quaternion extraRotation)
+        public static Quaternion RotateTowardsPosition(this Quaternion rootRotation, Vector3 rootPosition, Vector3 upVector, Vector3 targetPosition, float maxAngle, Quaternion extraRotation)
         {
             var diff = targetPosition - rootPosition;
-            var rot = Quaternion.LookRotation(diff.normalized);
+            var rot = Quaternion.LookRotation(diff.normalized, upVector);
             var spinAngle = rot.eulerAngles.y;
             var tiltAngle = rot.eulerAngles.x;
             return extraRotation * Quaternion.RotateTowards(Quaternion.Inverse(extraRotation) * rootRotation, Quaternion.Euler(tiltAngle, spinAngle, 0), maxAngle);
         }
 
-        public static void RotateTowardsPosition(this Rigidbody rb, Vector3 worldPos, float maxAngle, Quaternion extraRotation)
+        public static void RotateTowardsPosition(this Rigidbody rb, Vector3 upVector, Vector3 worldPos, float maxAngle, Quaternion extraRotation)
         {
-            rb.rotation = RotateTowardsPosition(rb.rotation, rb.position, worldPos, maxAngle, extraRotation);
+            rb.rotation = RotateTowardsPosition(rb.rotation, rb.position, upVector, worldPos, maxAngle, extraRotation);
         }
 
         public static int GetHierarchyDepth(this Transform transform)

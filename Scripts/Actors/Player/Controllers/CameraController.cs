@@ -15,6 +15,7 @@ namespace FPTemplate.Actors
 		public bool UIEnabled { get; set; }
 		public Camera Camera { get; private set; }
 		public InputSystemUIInputModule InputModule { get; private set; }
+		public Quaternion LastRotation { get; private set; }
 
 		[Header("Camera")]
 		public float LookSensitivity = 1;
@@ -49,7 +50,7 @@ namespace FPTemplate.Actors
 		private void Update()
 		{
 			SetGlobalVariables();
-
+			transform.rotation = LastRotation;
             InputModule.enabled = UIEnabled;
 			Cursor.lockState = LockCursor ? CursorLockMode.Locked : CursorLockMode.Confined;
 			LastDelta = m_look.ReadValue<Vector2>() * LookSensitivity;
@@ -87,7 +88,8 @@ namespace FPTemplate.Actors
 				transform.localRotation = Quaternion.Euler(-LookAngle.y, LookAngle.x, 0);
 				transform.localPosition = LookOffset;
 			}
-		}
+			LastRotation = transform.rotation;
+        }
 
 		public void LookAt(Vector3 forward)
 		{
