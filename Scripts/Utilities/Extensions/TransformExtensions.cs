@@ -33,10 +33,9 @@ namespace FPTemplate.Utilities.Extensions
         public static Quaternion RotateTowardsPosition(this Quaternion rootRotation, Vector3 rootPosition, Vector3 upVector, Vector3 targetPosition, float maxAngle, Quaternion extraRotation)
         {
             var diff = targetPosition - rootPosition;
-            var rot = Quaternion.LookRotation(diff.normalized, upVector);
-            var spinAngle = rot.eulerAngles.y;
-            var tiltAngle = rot.eulerAngles.x;
-            return extraRotation * Quaternion.RotateTowards(Quaternion.Inverse(extraRotation) * rootRotation, Quaternion.Euler(tiltAngle, spinAngle, 0), maxAngle);
+            var targetRotation = Quaternion.LookRotation(diff.normalized, upVector);
+            var smoothedRotation = Quaternion.RotateTowards(Quaternion.Inverse(extraRotation) * rootRotation, targetRotation, maxAngle);
+            return extraRotation * smoothedRotation;
         }
 
         public static void RotateTowardsPosition(this Rigidbody rb, Vector3 upVector, Vector3 worldPos, float maxAngle, Quaternion extraRotation)

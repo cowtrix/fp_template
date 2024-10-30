@@ -1,12 +1,14 @@
 using FPTemplate.Utilities;
 using FPTemplate.Utilities.Extensions;
+using System;
 using System.Collections;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace FPTemplate.World
 {
-	[RequireComponent(typeof(Collider))]
+    [RequireComponent(typeof(Collider))]
 	public class ColliderFoley : MonoBehaviour
 	{
 		[Range(0, 1)]
@@ -26,4 +28,5 @@ namespace FPTemplate.World
 			ObjectPool<AudioSource>.Release(tempAudioSource);*/
 		}
 	}
+
 }

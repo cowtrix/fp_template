@@ -8,3 +8,6 @@
 [submodule "Scripts/Utilities/zplines"]
 	path = Scripts/Utilities/zplines
 	url = https://github.com/cowtrix/zSplines.git
+[submodule "Scripts/Utilities/Unity-MeshSaver"]
+	path = Scripts/Utilities/Unity-MeshSaver
+	url = https://github.com/pharan/Unity-MeshSaver.git

@@ -11,5 +11,6 @@
         MOVE,
         LOOK,
         JUMP,
+        SPRINT,
     }
 }

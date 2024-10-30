@@ -12,6 +12,25 @@ namespace FPTemplate.Utilities.Extensions
 #endif
         }
 
+        public static void DrawArrow(Vector3 start, Vector3 end, Color color, float size)
+        {
+            Gizmos.color = color;
+
+            var delta = end - start;
+            var up = Vector3.up * size;
+            var p1 = start + delta * .75f;
+
+            Gizmos.DrawLine(start + up * .5f, start - up * .5f);
+            Gizmos.DrawLine(start + up * .5f, p1 + up * .5f);
+            Gizmos.DrawLine(start - up * .5f, p1 - up * .5f);
+            Gizmos.DrawLine(p1 + up * .5f, p1 + up);
+            Gizmos.DrawLine(p1 - up * .5f, p1 - up);
+
+            Gizmos.DrawLine(p1 + up, end);
+            Gizmos.DrawLine(p1 - up, end);
+        }
+
+
         public static void DrawWireCube(Vector3 origin, Vector3 extents, Quaternion rotation, Color color)
         {
             var verts = new[]

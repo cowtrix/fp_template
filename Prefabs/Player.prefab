@@ -19,6 +19,7 @@ GameObject:
   - component: {fileID: 8532043325182517142}
   - component: {fileID: 5555894934085633562}
   - component: {fileID: 8802379932262499134}
+  - component: {fileID: 103676104335570259}
   m_Layer: 0
   m_Name: WorldCamera
   m_TagString: MainCamera
@@ -136,7 +137,7 @@ MonoBehaviour:
   priority: 0
   blendDistance: 0
   weight: 1
-  sharedProfile: {fileID: 11400000, guid: 10fc4df2da32a41aaa32d77bc913491c, type: 2}
+  sharedProfile: {fileID: 0}
 --- !u!114 &488162579100196419
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -197,6 +198,7 @@ MonoBehaviour:
   m_DeselectOnBackgroundClick: 1
   m_PointerBehavior: 0
   m_CursorLockBehavior: 0
+  m_ScrollDeltaPerTick: 6
 --- !u!114 &8532043325182517142
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -216,7 +218,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 1
   volumeAnchorOverride: {fileID: 0}
-  antialiasing: 0
+  antialiasing: 2
   SMAAQuality: 2
   dithering: 0
   stopNaNs: 0
@@ -348,9 +350,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0b7333cd11a9eeb42bd292a347c9854d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  OutputVolume: {fileID: 8802379932262499134}
   Buffers:
   - Name: ColorBuffer
-    Format: 0
+    Format: 9
     Depth: 0
     BufferType: 0
     SetGlobalTexture: 1
@@ -365,6 +368,7 @@ MonoBehaviour:
     BufferType: 3
     SetGlobalTexture: 1
   Output:
+    ClearFlags: 1
     RenderMaterial: {fileID: 2100000, guid: 75aaeb4805a781245945d92431517c53, type: 2}
 --- !u!114 &8802379932262499134
 MonoBehaviour:
@@ -373,7 +377,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 316969782}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 26d6499a6bd256e47b859377446493a1, type: 3}
   m_Name: 
@@ -381,70 +385,21 @@ MonoBehaviour:
   m_IsGlobal: 1
   fadeRadius: 0
   priority: 0
-  customPasses:
-  - rid: 4204660315774255496
-  - rid: 4204660315774255497
-  - rid: 4204660315774255498
-  - rid: 4204660315774255499
+  customPasses: []
   injectionPoint: 6
   m_TargetCamera: {fileID: 0}
   useTargetCamera: 0
   references:
     version: 2
-    RefIds:
-    - rid: 4204660315774255496
-      type: {class: CopyPass, ns: , asm: NewAssembly}
-      data:
-        m_Name: Custom Pass
-        enabled: 1
-        targetColorBuffer: 0
-        targetDepthBuffer: 0
-        clearFlags: 0
-        passFoldout: 0
-        m_Version: 0
-        outputRenderTexture: {fileID: 0}
-        customCopyShader: {fileID: 4800000, guid: 247f17c56ca52d245890a623d4453c20, type: 3}
-        bufferType: 0
-    - rid: 4204660315774255497
-      type: {class: CopyPass, ns: , asm: NewAssembly}
-      data:
-        m_Name: Custom Pass
-        enabled: 1
-        targetColorBuffer: 0
-        targetDepthBuffer: 0
-        clearFlags: 0
-        passFoldout: 0
-        m_Version: 0
-        outputRenderTexture: {fileID: 0}
-        customCopyShader: {fileID: 4800000, guid: 247f17c56ca52d245890a623d4453c20, type: 3}
-        bufferType: 1
-    - rid: 4204660315774255498
-      type: {class: CopyPass, ns: , asm: NewAssembly}
-      data:
-        m_Name: Custom Pass
-        enabled: 1
-        targetColorBuffer: 0
-        targetDepthBuffer: 0
-        clearFlags: 0
-        passFoldout: 0
-        m_Version: 0
-        outputRenderTexture: {fileID: 0}
-        customCopyShader: {fileID: 4800000, guid: 247f17c56ca52d245890a623d4453c20, type: 3}
-        bufferType: 3
-    - rid: 4204660315774255499
-      type: {class: FullScreenCustomPass, ns: UnityEngine.Rendering.HighDefinition, asm: Unity.RenderPipelines.HighDefinition.Runtime}
-      data:
-        m_Name: Custom Pass
-        enabled: 1
-        targetColorBuffer: 0
-        targetDepthBuffer: 0
-        clearFlags: 7
-        passFoldout: 0
-        m_Version: 0
-        fullscreenPassMaterial: {fileID: 2100000, guid: 75aaeb4805a781245945d92431517c53, type: 2}
-        materialPassIndex: 0
-        materialPassName: Custom Pass 0
-        fetchColorBuffer: 0
+    RefIds: []
+--- !u!124 &103676104335570259
+Behaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 316969782}
+  m_Enabled: 1
 --- !u!1 &1191410686
 GameObject:
   m_ObjectHideFlags: 0
@@ -1094,13 +1049,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   AmbientTracks:
-  - {fileID: 0}
-  LightingTransitionSpeed: 1
-  DefaultLighting:
-    AmbientSkyColor: {r: 0.7264151, g: 0.7264151, b: 0.7264151, a: 0}
-    AmbientEquatorColor: {r: 0.3301887, g: 0.3301887, b: 0.3301887, a: 0}
-    AmbientGroundColor: {r: 0.084905684, g: 0.084905684, b: 0.084905684, a: 0}
-    Intensity: 2
+  - {fileID: 11400000, guid: f8423eb71ca5d414ca77db343da2a2b0, type: 2}
 --- !u!1 &1543097421
 GameObject:
   m_ObjectHideFlags: 0
@@ -1214,6 +1163,7 @@ GameObject:
   - component: {fileID: 1814919611}
   - component: {fileID: 8181245211958629110}
   - component: {fileID: 4011509547689962042}
+  - component: {fileID: 4666336612290576360}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -1386,7 +1336,19 @@ MonoBehaviour:
     m_ActionId: b7230bb6-fc9b-4f52-8b25-f5e19cb2c2ba
     m_ActionName: 'Player/Next[/Keyboard/2]'
   - m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 7812470021605113652}
+        m_TargetAssemblyTypeName: FPTemplate.Actors.Player.PlayerActor, Assembly-CSharp
+        m_MethodName: ActionExecuted
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
     m_ActionId: 641cd816-40e6-41b4-8c3d-04687c349290
     m_ActionName: 'Player/Sprint[/Keyboard/leftShift]'
   - m_PersistentCalls:
@@ -1456,7 +1418,19 @@ MonoBehaviour:
   ActorName: Unnamed Entity
   OnActionExecuted:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 4666336612290576360}
+        m_TargetAssemblyTypeName: AnchorTeleportAbility, Assembly-CSharp
+        m_MethodName: ActionExecuted
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1814919611
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1512,6 +1486,28 @@ MonoBehaviour:
   OnInventoryUpdate:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &4666336612290576360
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1737012672823703278}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 017a8d20bb81deb4599245355fcbd5cd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_guid: 2c3e0099-0ce1-4cda-afb5-d4b2f54f2db1
+  ThinkSpeed: 1
+  Priority: 0
+  FocusedCamera: {fileID: 316969787}
+  SprintDistance: 100
+  TeleportTolerance: 10
+  MoveSpeed: 10
+  LOSMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
 --- !u!1 &6148532260472240090
 GameObject:
   m_ObjectHideFlags: 0
@@ -1697,6 +1693,14 @@ PrefabInstance:
     - target: {fileID: 2211748765962362123, guid: be91dae1e5e004645a02b7fe59ae7fb3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5598412601575495842, guid: be91dae1e5e004645a02b7fe59ae7fb3, type: 3}
+      propertyPath: m_spriteAsset
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 9030438380949448096, guid: be91dae1e5e004645a02b7fe59ae7fb3, type: 3}
+      propertyPath: m_spriteAsset
+      value: 
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

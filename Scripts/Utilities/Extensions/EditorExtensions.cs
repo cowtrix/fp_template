@@ -154,24 +154,6 @@ namespace FPTemplate.Utilities.Extensions
             }
         }
 
-		public static void DrawArrow(Vector3 start, Vector3 end, Color color, float size)
-		{
-			Gizmos.color = color;
-
-			var delta = end - start;
-			var up = Vector3.up * size;
-			var p1 = start + delta * .75f;
-
-			Gizmos.DrawLine(start + up * .5f, start - up * .5f);
-			Gizmos.DrawLine(start + up * .5f, p1 + up * .5f);
-			Gizmos.DrawLine(start - up * .5f, p1 - up * .5f);
-			Gizmos.DrawLine(p1 + up * .5f, p1 + up);
-			Gizmos.DrawLine(p1 - up * .5f, p1 - up);
-
-			Gizmos.DrawLine(p1 + up, end);
-			Gizmos.DrawLine(p1 - up, end);
-		}
-
 		private static GUIStyle _seperator = new GUIStyle("box")
 		{
 			border = new RectOffset(0, 0, 1, 0),

@@ -121,7 +121,7 @@ namespace FPTemplate.Utilities.Extensions
             return false;
         }
 
-        private static bool IsPointInCameraFrustum(this Camera camera, Vector3 point)
+        public static bool IsPointInCameraFrustum(this Camera camera, Vector3 point)
         {
             Vector3 viewportPoint = camera.WorldToViewportPoint(point);
             return viewportPoint.x >= 0 && viewportPoint.x <= 1 &&

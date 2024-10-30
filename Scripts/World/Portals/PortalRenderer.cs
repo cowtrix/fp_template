@@ -3,7 +3,6 @@ using UnityEngine;
 using FPTemplate.Utilities;
 using FPTemplate.Utilities.Extensions;
 using FPTemplate.Actors;
-using vSplines;
 using FPTemplate.Utilities.Maths;
 using System.Collections.Generic;
 using FPTemplate.Utilities.Helpers;
@@ -157,18 +156,6 @@ namespace FPTemplate.World.Portals
             {
                 return;
             }
-            var connector = new SplineSegment(new SplineSegment.ControlPoint
-            {
-                Position = Bounds.center,
-                Control = transform.localToWorldMatrix.MultiplyVector(PortalConfiguration.Normal) * 10,
-            }, new SplineSegment.ControlPoint
-            {
-                Position = Destination.Bounds.center,
-                Control = Destination.transform.localToWorldMatrix.MultiplyVector(Destination.PortalConfiguration.Normal) * 10,
-            }, 12);
-            connector.Recalculate(true);
-            connector.DrawGizmos(Color.green);
-
             Gizmos.color = Color.yellow;
             foreach (var neighbour in Neighbours)
             {
